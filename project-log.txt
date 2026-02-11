@@ -1,0 +1,237 @@
+===== VALENTINES CARD — PROJECT LOG =====
+Last updated: 2026-02-06 (Session 3)
+
+--- PROJECT OVERVIEW ---
+A fun/chaotic Valentine's card website built with Vite + Vanilla JS.
+Goal: Centered envelope that opens on click to reveal a letter sliding up,
+then a modal with "Will you be my Valentine?" and heart-shaped YES/NO
+buttons. NO dodges, YES grows. Celebration on YES.
+
+--- TECH STACK ---
+- Vite (vanilla JS template)
+- HTML / CSS / JS — no framework
+- Google Fonts: Caveat (handwriting style)
+- canvas-confetti: REMOVED (was causing perf issues, excessive)
+
+--- ENVIRONMENT ---
+- WSL Ubuntu 22.04
+- Node via nvm (LTS)
+- Project path: ~/projects/valentines-card
+- Dev server: npm run dev → http://localhost:5173/
+
+--- FILE MANIFEST ---
+index.html        — Main HTML structure
+src/style.css     — All styles and animations
+src/main.js       — Interactivity and canvas hearts
+project-log.txt   — This file (project documentation)
+package.json      — Vite config + dependencies
+
+--- INTERACTION LOG ---
+
+[2026-02-06 — Session 1: Complete Rewrite]
+
+PRIOR STATE (from ChatGPT):
+- CSS was incomplete (cut off at line 182, .modal block never closed)
+- Excessive canvas-confetti usage (performance issues, obnoxious)
+- Still had "Open the question" button (should have been removed)
+- No 3D perspective, no creativity, generic look
+- Broken flow: envelope didn't match spec
+
+CHANGES MADE:
+
+1. Rewrote index.html
+   - Canvas for background hearts
+   - Glass pill "TAP TO OPEN" (Apple frosted glass style)
+   - 3D envelope: back, front pocket (V-notch), flap (downward triangle), label
+   - Letter note inside envelope (hidden initially, rises on open)
+   - Modal overlay: glassmorphism, heart-shaped YES/NO SVG buttons
+   - Celebration screen overlay
+   - Google Fonts: Caveat for handwriting style
+
+2. Rewrote src/style.css
+   - Dark gradient background (deep purple/maroon with radial glows)
+   - Glass pill with pulsing glow animation
+   - 3D perspective on envelope scene (perspective: 1000px, rotateX 6deg)
+   - Envelope layers: back, front pocket (clip-path V), flap (clip-path triangle)
+   - "Hey Valentine" in Caveat font on envelope body
+   - Flap: 3D rotateX(180deg) opening, backface-visibility hidden
+   - Letter: opacity 0 → 1, translateY(-75%) rise with spring easing
+   - Modal: glassmorphism (dark bg, blur, pink border glow)
+   - Heart-shaped buttons via inline SVG
+   - YES: bright pink/red, grows with scale()
+   - NO: muted gray, repositions with absolute positioning
+   - Shake animation on NO clicks
+   - Celebration: full-screen, animated title, floating emoji hearts
+   - Responsive: mobile breakpoints for sizing
+
+3. Rewrote src/main.js
+   - Envelope click → flap opens (0s) → letter rises (500ms) → modal (1400ms)
+   - Re-clicking opened envelope reopens modal
+   - Click outside modal = close
+   - NO: dodges on hover (desktop) + repositions after click
+         YES grows up to 3x, subtitle cycles through funny lines
+   - YES: hides modal → celebration screen → floating heart emojis
+   - Background hearts: canvas-based, throttled spawning, capped at 60
+   - Pre-seeded 8 hearts on screen for immediate visual
+   - No canvas-confetti (fully removed)
+
+4. Cleanup
+   - Deleted src/counter.js (unused Vite default)
+   - Deleted src/javascript.svg (unused Vite default)
+   - Uninstalled canvas-confetti npm package
+
+DESIGN DECISIONS:
+- Confetti removed entirely (user: "fuck the confetti")
+- Celebration: CSS emoji hearts floating up (lightweight alternative)
+- Envelope inner side faces user with downward triangle flap
+- Flap opens upward via 3D rotateX on top-center origin
+- Letter fades in + rises (opacity + translateY) to avoid z-index fights
+- Glass pill fades out after envelope opens
+- "Hey Valentine" label fades when envelope opens (letter covers area)
+- Background hearts: fewer, slower, more transparent (subtle, not distracting)
+- NO dodge: mouseenter on desktop, reposition on every click
+- Celebration is final state (no dismiss, refresh to restart)
+
+NOT DONE YET:
+- Sound effects toggle (optional future)
+- Deployment to public URL
+- Personalizing name/messages for the recipient
+- Testing on actual mobile device
+- Additional Easter eggs or animations
+
+[2026-02-06 — Session 2: Remove glass pill]
+
+USER FEEDBACK: Card looks fantastic. Wants to iterate 2 fixes at a time.
+
+CHANGES MADE:
+1. Removed "TAP TO OPEN" glass pill entirely
+   - Deleted <div class="glass-pill"> from index.html
+   - Deleted tapHint JS reference + fade-out logic from main.js
+   - Deleted .glass-pill CSS + @keyframes pill-glow + .fade-out from style.css
+   - Envelope is now the sole clickable element — no hint text
+
+REASON: User decided the envelope is self-explanatory; the pill was unnecessary.
+
+[2026-02-06 — Session 3: Personalize name + enlarge envelope]
+
+CHANGES MADE:
+1. Changed envelope label from "Hey Valentine 💘" to "Hey Linda" (no emoji)
+   - index.html: updated .env-label text content
+
+2. Increased envelope size
+   - style.css: .envelope width from min(380px, 82vw) → min(460px, 88vw)
+   - style.css: mobile breakpoint from 88vw → 92vw
+
+CURRENT ENVELOPE LABEL: "Hey Linda"
+CURRENT ENVELOPE SIZE: 460px max / 88vw (92vw on mobile)
+
+[2026-02-07 — Session 4: Major visual overhaul + new features]
+
+USER REQUESTS:
+1. Envelope needs 3D style, not just color shades. "Hey Linda" move to top center where heart is.
+2. Letter note visible longer before question — creative transition needed.
+3. YES/NO hearts need professional look (gradients, glossy, glow).
+4. Add sound effects.
+5. Envelope should be various lavender gradient of purple.
+6. Idle timeout: purple gradient butterfly snatches the card if user takes too long.
+
+CHANGES MADE:
+
+1. index.html — targeted edits:
+   - Added continue button (<button class="continue-btn">) inside .letter-body
+   - Upgraded YES heart SVG: added <linearGradient> fill (pink→hot→deep), glossy highlight
+     overlay path, specular ellipse highlights on lobes, drop-shadow glow filter
+   - Upgraded NO heart SVG: added <linearGradient> fill (gray gradient), subtle glow filter,
+     specular highlight ellipses
+   - Added butterfly SVG element before </body>: detailed SVG with wing veins, eye spots,
+     radial gradient spots, glowing antenna tips, wing-l/wing-r groups for CSS flap animation.
+     Electric purple gradient (#EA80FC → #D500F9 → #AA00FF → #6200EA) contrasting the
+     soft lavender envelope.
+   - Added too-slow overlay div: emoji, message, retry button
+
+2. src/style.css — full rewrite (same class names, same structure):
+   - Color palette changed from pink/red to lavender purple:
+     --env-dark: #311b92, --env-mid: #5e35b1, --env-light: #9575cd
+     --env-pale: #b39ddb, --env-flap-top: #d1c4e9
+   - Background body: purple-tinted radial gradients instead of maroon
+   - .env-back: layered gradient (dark→mid→light purple) + highlight overlay + enhanced
+     box-shadow with inset highlights for 3D depth
+   - .env-front: light lavender gradient for bottom V-pocket
+   - .env-flap: light→dark gradient (top-down natural lighting)
+   - .env-label: REPOSITIONED from bottom:16% to top:20%. Restyled as wax seal
+     (circular, 74px, radial gradient purple, inset box-shadows for 3D raised effect).
+     Fades + scales + rotates on open.
+   - Removed .env-flap::after heart decoration (replaced by wax seal)
+   - .continue-btn: pill-shaped, purple gradient, hidden by default, .visible class
+     fades in. Pulsing heart animation.
+   - .yes-btn: size increased to 110x100, added yes-pulse glow animation
+   - .no-btn: size increased to 72x65
+   - Added .butterfly styles: fixed position, z-index 200, wing-l/wing-r flap animations
+     (scaleX 1→0.2 alternating at 0.16s)
+   - Added .too-slow-overlay: fixed fullscreen, z-index 300, fade in/out
+   - Added .retry-btn: pill, purple gradient, hover scale
+   - Added .stage.fading class for card-to-modal transition
+   - Modal border color changed to subtle purple tint
+
+3. src/main.js — full rewrite (same logic structure, same DOM refs):
+   - ADDED: Web Audio API sound system (all procedural, no files):
+     playOpen (whoosh sweep + noise + sparkle tones)
+     playPop (quick sine drop)
+     playChime (C-E-G-C happy sequence for YES)
+     playBuzz (descending square wave for NO)
+     playHover (subtle high tick)
+     playShimmer (ascending triple tone for continue)
+     playDramatic (rising sawtooth + overtones for butterfly)
+   - CHANGED: Envelope open flow:
+     OLD: flap(0s) → letter(500ms) → modal(1400ms)
+     NEW: flap(0s) → letter(500ms) → continue btn appears(1600ms) → user clicks →
+          stage fades out(500ms) → modal appears
+   - ADDED: continueBtn click handler with stage.fading transition
+   - ADDED: Idle timer (15s). Resets on mousemove/click/touch. Triggers butterfly
+     if user hasn't interacted and modal isn't showing.
+   - ADDED: launchButterfly():
+     Phase 1: Butterfly enters from random edge, zigzags to envelope center (2s)
+     Phase 2: Shakes the envelope violently (12 shakes at 45ms)
+     Phase 3: Flies away carrying the envelope (1.4s, spinning, scaling down)
+     Shows "Too slow!" overlay after exit
+   - CHANGED: Background heart hue range from 320-360 (pink only) to 270-330 (purple/pink)
+   - ADDED: Sound calls on all interactions (open, continue, yes, no, hover)
+   - KEPT: All existing YES/NO logic, celebration screen, dodging no button, shake animation
+
+DESIGN DECISIONS:
+- Wax seal replaces both the old bottom label AND the flap heart decoration
+- Wax seal is purple-on-purple (deep purple seal on lavender flap) for cohesion
+- Continue button creates intentional pause to read the letter (user complaint about it
+  being too brief)
+- Stage fading creates smooth visual bridge between letter and modal
+- Butterfly uses contrasting electric/neon purple (#D500F9, #AA00FF) vs envelope's
+  soft lavender (#9575cd, #b39ddb) — user requested "contrast"
+- Heart buttons: YES gets gradient + glossy highlights + glow pulse, NO stays muted gray
+  (intentional asymmetry to encourage YES)
+- All sounds procedural via Web Audio API — zero external audio files
+- Idle timer only fires before modal is shown (won't interrupt YES/NO interaction)
+
+[2026-02-07 — Session 4b: Visual polish pass]
+
+CHANGES MADE:
+
+1. Envelope gradients: replaced choppy 2-3 stop gradients with smooth 8-stop
+   purple blends on env-back, env-front, and env-flap. Goes from deep #1a0040
+   through the full lavender spectrum to #ede7f6. Much smoother.
+
+2. Removed wax seal circle: .env-label reverted from circular wax seal back to
+   plain Caveat text at bottom:16% of envelope, proportionate clamp(22px,5vw,34px).
+   No more border-radius, background, or box-shadow.
+
+3. Butterfly fix: clamped rotation angle to [-90, 90] degrees during both phase1
+   (approach) and flyAway so it never enters upside down.
+
+4. Letter text: changed from "I put way too much effort..." to "I have a question for you…"
+
+5. Continue button: changed "♥ tap me…" to "💜 continue" (softer emoji, clearer label)
+
+6. Removed "The butterfly took your card." text from too-slow overlay. Just shows
+   "Too slow!" + emoji + retry button.
+
+7. NO button: changed from gray (#999→#666→#444) to purple (#b39ddb→#7e57c2→#512da8)
+   with matching purple glow. Keeps white specular highlights. Label color bumped to 0.9 opacity.

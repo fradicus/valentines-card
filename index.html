@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>💌 For You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Background floating hearts -->
+  <canvas id="bgCanvas"></canvas>
+
+  <main class="stage">
+    <!-- Envelope (3D perspective wrapper) -->
+    <div class="envelope-scene" id="envelopeScene">
+      <div class="envelope" id="envelope">
+        <!-- Layer 0: envelope back -->
+        <div class="env-back"></div>
+
+        <!-- Layer 2: front pocket (bottom V-notch) -->
+        <div class="env-front"></div>
+
+        <!-- Layer 3: label text on envelope -->
+        <div class="env-label">Hey Linda</div>
+
+        <!-- Layer 4: flap (downward triangle, inner side facing user) -->
+        <div class="env-flap"></div>
+
+        <!-- Layer 1→10: letter (hidden, rises on open) -->
+        <div class="letter" id="letter">
+          <div class="letter-body">
+            <p class="letter-msg">
+              I have a question for you…
+            </p>
+            <button class="continue-btn" id="continueBtn">
+              <span class="continue-heart">💜</span>
+              <span>continue</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Question modal -->
+  <div class="backdrop hidden" id="backdrop">
+    <div class="modal" id="modal">
+      <h2 class="q-title" id="qTitle">Will you be my Valentine? 💖</h2>
+      <p class="q-sub" id="qSub">Choose wisely…</p>
+      <div class="btn-row" id="btnRow">
+        <button class="heart-btn yes-btn" id="yesBtn">
+          <svg class="heart-svg" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="yG" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff6b9d"/><stop offset="50%" stop-color="#ff005d"/><stop offset="100%" stop-color="#c50048"/>
+              </linearGradient>
+              <linearGradient id="yHL" x1="30%" y1="0%" x2="50%" y2="50%">
+                <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+              </linearGradient>
+              <filter id="yGlow"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="rgba(255,0,93,0.5)"/></filter>
+            </defs>
+            <path d="M50,85 C25,65 0,50 0,28 C0,10 12,0 26,0 C36,0 46,8 50,18 C54,8 64,0 74,0 C88,0 100,10 100,28 C100,50 75,65 50,85Z" fill="url(#yG)" filter="url(#yGlow)"/>
+            <path d="M50,78 C28,60 5,47 5,28 C5,13 15,5 27,5 C36,5 45,11 50,20" fill="url(#yHL)" opacity="0.5"/>
+            <ellipse cx="28" cy="16" rx="12" ry="7" fill="rgba(255,255,255,0.3)" transform="rotate(-15,28,16)"/>
+            <ellipse cx="72" cy="16" rx="12" ry="7" fill="rgba(255,255,255,0.2)" transform="rotate(15,72,16)"/>
+          </svg>
+          <span class="btn-label">YES</span>
+        </button>
+        <button class="heart-btn no-btn" id="noBtn">
+          <svg class="heart-svg" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="nG" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#b39ddb"/><stop offset="50%" stop-color="#7e57c2"/><stop offset="100%" stop-color="#512da8"/>
+              </linearGradient>
+              <filter id="nGlow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(126,87,194,0.4)"/></filter>
+            </defs>
+            <path d="M50,85 C25,65 0,50 0,28 C0,10 12,0 26,0 C36,0 46,8 50,18 C54,8 64,0 74,0 C88,0 100,10 100,28 C100,50 75,65 50,85Z" fill="url(#nG)" filter="url(#nGlow)"/>
+            <ellipse cx="28" cy="16" rx="10" ry="6" fill="rgba(255,255,255,0.15)" transform="rotate(-15,28,16)"/>
+            <ellipse cx="72" cy="16" rx="10" ry="6" fill="rgba(255,255,255,0.12)" transform="rotate(15,72,16)"/>
+          </svg>
+          <span class="btn-label">no</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Celebration screen (final state after YES) -->
+  <div class="celebration hidden" id="celebration">
+    <div class="celeb-inner">
+      <h1 class="celeb-title">YESSS! 💘</h1>
+      <p class="celeb-text">I knew you'd say yes.</p>
+      <p class="celeb-sub">Best decision ever. 💕</p>
+    </div>
+  </div>
+
+  <!-- Butterfly (hidden until idle timeout) -->
+  <div id="butterfly" class="butterfly" aria-hidden="true">
+    <svg viewBox="0 0 200 180" class="butterfly-svg">
+      <defs>
+        <linearGradient id="bwL" x1="0%" y1="20%" x2="80%" y2="80%">
+          <stop offset="0%" stop-color="#EA80FC"/><stop offset="35%" stop-color="#D500F9"/>
+          <stop offset="70%" stop-color="#AA00FF"/><stop offset="100%" stop-color="#6200EA"/>
+        </linearGradient>
+        <linearGradient id="bwR" x1="100%" y1="20%" x2="20%" y2="80%">
+          <stop offset="0%" stop-color="#EA80FC"/><stop offset="35%" stop-color="#D500F9"/>
+          <stop offset="70%" stop-color="#AA00FF"/><stop offset="100%" stop-color="#6200EA"/>
+        </linearGradient>
+        <radialGradient id="bspot" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#E1BEE7" stop-opacity="0.9"/>
+          <stop offset="60%" stop-color="#CE93D8" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#AB47BC" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="bfG"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <g class="wing-l">
+        <path d="M100,85 C85,55 50,15 20,20 C5,25 0,45 5,65 C10,85 35,100 60,100 C75,100 90,95 100,85Z" fill="url(#bwL)" stroke="#7B1FA2" stroke-width="0.5"/>
+        <path d="M100,85 C80,60 50,40 30,35" stroke="rgba(255,255,255,0.15)" stroke-width="0.8" fill="none"/>
+        <circle cx="50" cy="50" r="14" fill="url(#bspot)"/><circle cx="50" cy="50" r="5.5" fill="#311B92" opacity="0.35"/>
+        <path d="M100,90 C80,100 50,115 30,130 C20,140 25,150 35,150 C50,150 75,135 100,105Z" fill="url(#bwL)" opacity="0.88" stroke="#7B1FA2" stroke-width="0.5"/>
+        <circle cx="55" cy="125" r="7" fill="url(#bspot)"/>
+      </g>
+      <g class="wing-r">
+        <path d="M100,85 C115,55 150,15 180,20 C195,25 200,45 195,65 C190,85 165,100 140,100 C125,100 110,95 100,85Z" fill="url(#bwR)" stroke="#7B1FA2" stroke-width="0.5"/>
+        <path d="M100,85 C120,60 150,40 170,35" stroke="rgba(255,255,255,0.15)" stroke-width="0.8" fill="none"/>
+        <circle cx="150" cy="50" r="14" fill="url(#bspot)"/><circle cx="150" cy="50" r="5.5" fill="#311B92" opacity="0.35"/>
+        <path d="M100,90 C120,100 150,115 170,130 C180,140 175,150 165,150 C150,150 125,135 100,105Z" fill="url(#bwR)" opacity="0.88" stroke="#7B1FA2" stroke-width="0.5"/>
+        <circle cx="145" cy="125" r="7" fill="url(#bspot)"/>
+      </g>
+      <ellipse cx="100" cy="95" rx="4.5" ry="22" fill="#4A148C"/>
+      <ellipse cx="100" cy="95" rx="3" ry="20" fill="#6A1B9A"/>
+      <circle cx="100" cy="72" r="5" fill="#4A148C"/>
+      <path d="M97,68 C90,45 78,35 72,30" stroke="#6A1B9A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M103,68 C110,45 122,35 128,30" stroke="#6A1B9A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <circle cx="72" cy="30" r="3" fill="#EA80FC" filter="url(#bfG)"/>
+      <circle cx="128" cy="30" r="3" fill="#EA80FC" filter="url(#bfG)"/>
+    </svg>
+  </div>
+
+  <!-- Too-slow overlay -->
+  <div id="tooSlow" class="too-slow-overlay">
+    <div class="too-slow-box">
+      <p class="too-slow-emoji">🦋</p>
+      <h2>Too slow!</h2>
+      <button onclick="location.reload()" class="retry-btn">Try again</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
