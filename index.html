@@ -4,98 +4,353 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>💌 For You</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<style>
+/* ---------- palette ---------- */
+:root {
+  --bg-deep: #050008;
+  --bg-mid: #0d001a;
+  --bg-glow: #1a0033;
+  --env-1: #311b92; --env-2: #4527a0; --env-3: #5e35b1;
+  --env-4: #7e57c2; --env-5: #9575cd; --env-6: #b39ddb;
+  --env-7: #d1c4e9; --env-8: #ede7f6;
+  --paper: #fff8fa; --ink: #2a0620; --soft: #e8d5f5;
+  --shadow-lg: 0 20px 60px rgba(0,0,0,.50);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--soft);
+  background: radial-gradient(ellipse 1200px 800px at 30% 20%, var(--bg-glow) 0%, var(--bg-mid) 45%, var(--bg-deep) 100%);
+  overflow: hidden;
+}
+
+#hearts-canvas {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+
+.stage {
+  position: relative; z-index: 1; height: 100%;
+  display: grid; place-items: center; padding: 24px;
+}
+
+/* ---------- card shell ---------- */
+.card-shell {
+  width: min(520px, 92vw); display: grid; place-items: center;
+  position: relative; transition: transform 1s ease, opacity .8s ease;
+}
+.card-shell.fading { transform: scale(.82); opacity: 0; pointer-events: none; }
+
+.hint {
+  position: absolute; top: -44px; display: flex; gap: 10px;
+  align-items: center; opacity: .9; user-select: none;
+  font-size: 14px; letter-spacing: .08em; text-transform: uppercase;
+  transition: opacity .5s ease;
+}
+.hint.gone { opacity: 0; pointer-events: none; }
+.hint span {
+  padding: 8px 12px; border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px; backdrop-filter: blur(8px);
+  background: rgba(255,255,255,.06);
+}
+
+/* ========== ENVELOPE — lavender 3-D ========== */
+.envelope {
+  width: 420px; max-width: 92vw; aspect-ratio: 4/3;
+  border: 0; padding: 0; background: transparent; cursor: pointer;
+  position: relative; transform-style: preserve-3d;
+  transform: perspective(1000px) rotateX(2deg) rotateY(-1deg);
+  filter: drop-shadow(0 10px 18px rgba(30,0,60,.45))
+          drop-shadow(0 30px 55px rgba(20,0,50,.50));
+  transition: transform .18s ease, filter .18s ease;
+}
+.envelope:hover {
+  transform: perspective(1000px) rotateX(1deg) rotateY(0deg) translateY(-3px);
+  filter: drop-shadow(0 14px 22px rgba(30,0,60,.5))
+          drop-shadow(0 36px 60px rgba(20,0,50,.55));
+}
+.envelope:active { transform: perspective(1000px) rotateX(2deg) scale(.99); }
+
+.env-back {
+  position: absolute; inset: 0; border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.07) 0%, transparent 40%),
+    linear-gradient(145deg, var(--env-3) 0%, var(--env-2) 50%, var(--env-1) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset -1px 0 0 rgba(255,255,255,.06),
+    inset 0 -2px 0 rgba(0,0,0,.18);
+}
+
+.env-front {
+  position: absolute; inset: 0; border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08) 0%, transparent 18%),
+    linear-gradient(160deg, var(--env-5) 0%, var(--env-6) 28%, var(--env-4) 65%, var(--env-3) 100%);
+  clip-path: polygon(0 35%, 50% 70%, 100% 35%, 100% 100%, 0 100%);
+  z-index: 3;
+}
+
+.env-flap {
+  position: absolute; inset: 0; border-radius: 18px;
+  background:
+    linear-gradient(to bottom, var(--env-8) 0%, var(--env-7) 22%, var(--env-6) 52%, var(--env-5) 78%, var(--env-4) 100%);
+  clip-path: polygon(0 35%, 50% 0, 100% 35%, 50% 68%);
+  transform-origin: 50% 18%;
+  transition: transform .65s cubic-bezier(.22,.9,.25,1);
+  z-index: 4;
+}
+
+/* wax seal */
+.wax-seal {
+  position: absolute; left: 50%; top: 53%; width: 78px; height: 78px;
+  transform: translate(-50%,-50%); border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff6090, #c2185b 55%, #880e4f 100%);
+  box-shadow:
+    0 2px 6px rgba(0,0,0,.35), 0 6px 16px rgba(136,14,79,.4),
+    inset 0 2px 4px rgba(255,255,255,.25), inset 0 -2px 5px rgba(0,0,0,.20);
+  display: grid; place-items: center; z-index: 5;
+  transition: transform .5s ease, opacity .4s ease; pointer-events: none;
+}
+.seal-text {
+  font-family: "Dancing Script", cursive; font-weight: 700;
+  font-size: 13.5px; color: #fce4ec;
+  text-shadow: 0 1px 3px rgba(0,0,0,.3); letter-spacing: .02em; line-height: 1;
+}
+.envelope.open .wax-seal {
+  transform: translate(-50%,-50%) scale(.4) rotate(20deg); opacity: 0;
+}
+
+/* letter */
+.letter {
+  position: absolute; left: 7%; right: 7%; bottom: 10%; height: 78%;
+  background: var(--paper); border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(22%) scale(.98);
+  transition: transform .8s cubic-bezier(.22,.9,.25,1);
+  overflow: hidden; z-index: 2;
+}
+.letter-inner {
+  height: 100%; padding: 28px 24px 18px; color: var(--ink);
+  display: flex; flex-direction: column; gap: 10px;
+  justify-content: center; text-align: center;
+}
+.msg { margin: 0; font-size: 17px; line-height: 1.5; }
+.tiny { margin: 0; font-size: 13px; opacity: .6; }
+
+.envelope.open .env-flap { transform: rotateX(180deg); }
+.envelope.open .letter { transform: translateY(-48%) scale(1); z-index: 6; }
+
+/* continue button */
+.continue-btn {
+  all: unset; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; margin: 8px auto 0; padding: 10px 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+  color: #ad1457; font-family: "Inter", sans-serif;
+  font-size: 13px; font-weight: 600; letter-spacing: .02em;
+  opacity: 0; transform: translateY(8px); pointer-events: none;
+  transition: opacity .6s ease, transform .6s ease, box-shadow .15s ease;
+  box-shadow: 0 4px 14px rgba(173,20,87,.25);
+}
+.continue-btn.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.continue-btn:hover { box-shadow: 0 6px 20px rgba(173,20,87,.35); }
+.continue-heart { font-size: 18px; animation: pulse-heart 1.1s ease-in-out infinite; }
+@keyframes pulse-heart {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+}
+
+/* ========== MODAL ========== */
+.backdrop {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  background: rgba(0,0,0,.58); z-index: 10; padding: 18px;
+  opacity: 0; pointer-events: none; transition: opacity .5s ease;
+}
+.backdrop.show { opacity: 1; pointer-events: auto; }
+
+.modal {
+  width: min(500px, 94vw); border-radius: 28px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  backdrop-filter: blur(16px); box-shadow: var(--shadow-lg);
+  padding: 40px 34px 36px; text-align: center;
+  transform: scale(.7) translateY(20px); opacity: 0;
+  transition: transform .55s cubic-bezier(.34,1.56,.64,1), opacity .4s ease;
+}
+.backdrop.show .modal { transform: scale(1) translateY(0); opacity: 1; }
+.modal h2 { margin: 0 0 8px; font-size: 28px; }
+.modal p  { margin: 0 0 28px; font-size: 16px; opacity: .85; }
+
+.choice-row {
+  display: flex; gap: 28px; justify-content: center;
+  align-items: center; position: relative; min-height: 130px;
+}
+
+/* heart-shaped buttons */
+.heart-btn {
+  position: relative; border: 0; background: transparent; padding: 0;
+  cursor: pointer; transition: transform .18s ease, filter .18s ease;
+}
+.heart-btn:hover { transform: scale(1.08); filter: brightness(1.1); }
+.heart-btn:active { transform: scale(1.04); }
+
+.yes-heart { width: 130px; height: 120px; animation: yes-glow 2s ease-in-out infinite; }
+.yes-heart .heart-svg { width: 100%; height: 100%; }
+.no-heart  { width: 90px; height: 82px; }
+.no-heart .heart-svg { width: 100%; height: 100%; }
+
+.heart-label {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  padding-top: 6px; font-family: "Inter", sans-serif; font-weight: 800;
+  pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,.18);
+}
+.yes-label { font-size: 22px; color: #004d25; }
+.no-label  { font-size: 16px; color: #fff; }
+
+@keyframes yes-glow {
+  0%,100% { filter: brightness(1) drop-shadow(0 0 0px transparent); }
+  50% { filter: brightness(1.08) drop-shadow(0 0 12px rgba(0,200,83,.35)); }
+}
+
+/* ========== BUTTERFLY ========== */
+.butterfly {
+  position: fixed; z-index: 100; width: 180px; height: 155px;
+  pointer-events: none; opacity: 0; transition: opacity .3s ease;
+}
+.butterfly.visible { opacity: 1; }
+.butterfly-svg { width: 100%; height: 100%; }
+
+.wing-l, .wing-r { transform-box: view-box; }
+.wing-l { transform-origin: 100px 90px; animation: flapL .16s ease-in-out infinite alternate; }
+.wing-r { transform-origin: 100px 90px; animation: flapR .16s ease-in-out infinite alternate; }
+@keyframes flapL { from { transform: scaleX(1); } to { transform: scaleX(.2); } }
+@keyframes flapR { from { transform: scaleX(1); } to { transform: scaleX(.2); } }
+
+/* ========== TOO-SLOW ========== */
+.too-slow-overlay {
+  position: fixed; inset: 0; z-index: 200; display: grid; place-items: center;
+  background: rgba(5,0,8,.9); opacity: 0; pointer-events: none;
+  transition: opacity .8s ease;
+}
+.too-slow-overlay.show { opacity: 1; pointer-events: auto; }
+.too-slow-box { text-align: center; color: var(--soft); }
+.too-slow-emoji { font-size: 64px; margin: 0 0 12px; animation: bob 1.5s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.too-slow-box h2 { font-size: 32px; margin: 0 0 8px; }
+.too-slow-box p  { font-size: 16px; opacity: .7; margin: 0 0 28px; }
+.retry-btn {
+  all: unset; cursor: pointer; padding: 14px 36px; border-radius: 999px;
+  background: linear-gradient(135deg, var(--env-4), var(--env-5));
+  color: #fff; font-family: "Inter", sans-serif; font-weight: 700; font-size: 16px;
+  box-shadow: 0 6px 20px rgba(126,87,194,.4);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.retry-btn:hover { transform: scale(1.05); box-shadow: 0 8px 28px rgba(126,87,194,.55); }
+
+/* shake */
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-6px) rotate(-1deg); }
+  40% { transform: translateX(6px) rotate(1deg); }
+  60% { transform: translateX(-4px) rotate(-.5deg); }
+  80% { transform: translateX(4px) rotate(.5deg); }
+}
+.shake .modal { animation: shake .26s ease-out; }
+
+@media (max-width: 480px) {
+  .envelope { width: 340px; }
+  .wax-seal { width: 64px; height: 64px; }
+  .seal-text { font-size: 11px; }
+  .modal h2 { font-size: 22px; }
+  .msg { font-size: 15px; }
+  .choice-row { gap: 18px; }
+  .yes-heart { width: 105px; height: 96px; }
+  .yes-label { font-size: 18px; }
+  .no-heart { width: 74px; height: 68px; }
+  .no-label { font-size: 13px; }
+  .butterfly { width: 130px; height: 112px; }
+}
+</style>
 </head>
 <body>
-  <!-- Background floating hearts -->
-  <canvas id="bgCanvas"></canvas>
+  <canvas id="hearts-canvas"></canvas>
 
   <main class="stage">
-    <!-- Envelope (3D perspective wrapper) -->
-    <div class="envelope-scene" id="envelopeScene">
-      <div class="envelope" id="envelope">
-        <!-- Layer 0: envelope back -->
+    <section class="card-shell" id="cardShell">
+      <div class="hint" id="hint"><span>tap to open</span></div>
+
+      <button id="envelopeBtn" class="envelope" aria-label="Open envelope">
         <div class="env-back"></div>
-
-        <!-- Layer 2: front pocket (bottom V-notch) -->
         <div class="env-front"></div>
-
-        <!-- Layer 3: label text on envelope -->
-        <div class="env-label">Hey Linda</div>
-
-        <!-- Layer 4: flap (downward triangle, inner side facing user) -->
         <div class="env-flap"></div>
-
-        <!-- Layer 1→10: letter (hidden, rises on open) -->
-        <div class="letter" id="letter">
-          <div class="letter-body">
-            <p class="letter-msg">
-              I have a question for you…
-            </p>
-            <button class="continue-btn" id="continueBtn">
-              <span class="continue-heart">💜</span>
-              <span>continue</span>
+        <div class="wax-seal" id="waxSeal">
+          <span class="seal-text">Hey Linda</span>
+        </div>
+        <div class="letter">
+          <div class="letter-inner">
+            <p class="msg" id="message">I made you a chaotic little website because you deserve something fun as hell. 💘</p>
+            <p class="tiny">— Piolo</p>
+            <button class="continue-btn" id="continueBtn" tabindex="-1">
+              <span class="continue-heart">♥</span>
+              <span class="continue-label">I have a question…</span>
             </button>
           </div>
+        </div>
+      </button>
+    </section>
+
+    <div id="modalBackdrop" class="backdrop">
+      <div class="modal">
+        <h2 id="questionTitle">Will you be my Valentine? 💖</h2>
+        <p id="questionSub">Choose wisely.</p>
+        <div class="choice-row" id="choiceRow">
+          <button id="yesBtn" class="heart-btn yes-heart" aria-label="Yes">
+            <svg class="heart-svg" viewBox="0 0 120 110">
+              <defs>
+                <linearGradient id="yg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#b9f6ca"/><stop offset="40%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#00c853"/>
+                </linearGradient>
+                <linearGradient id="yhl" x1="50%" y1="0%" x2="50%" y2="60%">
+                  <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                </linearGradient>
+                <filter id="yglow"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="rgba(0,200,83,0.55)"/></filter>
+              </defs>
+              <path d="M60 102 C30 78,0 56,0 32 C0 12,16 0,34 0 C47 0,57 10,60 22 C63 10,73 0,86 0 C104 0,120 12,120 32 C120 56,90 78,60 102Z" fill="url(#yg)" filter="url(#yglow)"/>
+              <path d="M60 94 C34 73,8 54,8 34 C8 17,20 7,35 7 C46 7,56 14,60 24" fill="url(#yhl)" opacity="0.55"/>
+              <ellipse cx="37" cy="20" rx="14" ry="9" fill="rgba(255,255,255,0.3)" transform="rotate(-15 37 20)"/>
+              <ellipse cx="83" cy="20" rx="14" ry="9" fill="rgba(255,255,255,0.22)" transform="rotate(15 83 20)"/>
+            </svg>
+            <span class="heart-label yes-label">YES</span>
+          </button>
+          <button id="noBtn" class="heart-btn no-heart" aria-label="No">
+            <svg class="heart-svg" viewBox="0 0 120 110">
+              <defs>
+                <linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ff8a80"/><stop offset="40%" stop-color="#ff5252"/><stop offset="100%" stop-color="#c62828"/>
+                </linearGradient>
+                <linearGradient id="nhl" x1="50%" y1="0%" x2="50%" y2="60%">
+                  <stop offset="0%" stop-color="rgba(255,255,255,0.42)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                </linearGradient>
+                <filter id="nglow"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(198,40,40,0.45)"/></filter>
+              </defs>
+              <path d="M60 102 C30 78,0 56,0 32 C0 12,16 0,34 0 C47 0,57 10,60 22 C63 10,73 0,86 0 C104 0,120 12,120 32 C120 56,90 78,60 102Z" fill="url(#ng)" filter="url(#nglow)"/>
+              <path d="M60 94 C34 73,8 54,8 34 C8 17,20 7,35 7 C46 7,56 14,60 24" fill="url(#nhl)" opacity="0.45"/>
+              <ellipse cx="37" cy="20" rx="13" ry="8" fill="rgba(255,255,255,0.22)" transform="rotate(-15 37 20)"/>
+              <ellipse cx="83" cy="20" rx="13" ry="8" fill="rgba(255,255,255,0.18)" transform="rotate(15 83 20)"/>
+            </svg>
+            <span class="heart-label no-label">no</span>
+          </button>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- Question modal -->
-  <div class="backdrop hidden" id="backdrop">
-    <div class="modal" id="modal">
-      <h2 class="q-title" id="qTitle">Will you be my Valentine? 💖</h2>
-      <p class="q-sub" id="qSub">Choose wisely…</p>
-      <div class="btn-row" id="btnRow">
-        <button class="heart-btn yes-btn" id="yesBtn">
-          <svg class="heart-svg" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="yG" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ff6b9d"/><stop offset="50%" stop-color="#ff005d"/><stop offset="100%" stop-color="#c50048"/>
-              </linearGradient>
-              <linearGradient id="yHL" x1="30%" y1="0%" x2="50%" y2="50%">
-                <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-              </linearGradient>
-              <filter id="yGlow"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="rgba(255,0,93,0.5)"/></filter>
-            </defs>
-            <path d="M50,85 C25,65 0,50 0,28 C0,10 12,0 26,0 C36,0 46,8 50,18 C54,8 64,0 74,0 C88,0 100,10 100,28 C100,50 75,65 50,85Z" fill="url(#yG)" filter="url(#yGlow)"/>
-            <path d="M50,78 C28,60 5,47 5,28 C5,13 15,5 27,5 C36,5 45,11 50,20" fill="url(#yHL)" opacity="0.5"/>
-            <ellipse cx="28" cy="16" rx="12" ry="7" fill="rgba(255,255,255,0.3)" transform="rotate(-15,28,16)"/>
-            <ellipse cx="72" cy="16" rx="12" ry="7" fill="rgba(255,255,255,0.2)" transform="rotate(15,72,16)"/>
-          </svg>
-          <span class="btn-label">YES</span>
-        </button>
-        <button class="heart-btn no-btn" id="noBtn">
-          <svg class="heart-svg" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="nG" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#b39ddb"/><stop offset="50%" stop-color="#7e57c2"/><stop offset="100%" stop-color="#512da8"/>
-              </linearGradient>
-              <filter id="nGlow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(126,87,194,0.4)"/></filter>
-            </defs>
-            <path d="M50,85 C25,65 0,50 0,28 C0,10 12,0 26,0 C36,0 46,8 50,18 C54,8 64,0 74,0 C88,0 100,10 100,28 C100,50 75,65 50,85Z" fill="url(#nG)" filter="url(#nGlow)"/>
-            <ellipse cx="28" cy="16" rx="10" ry="6" fill="rgba(255,255,255,0.15)" transform="rotate(-15,28,16)"/>
-            <ellipse cx="72" cy="16" rx="10" ry="6" fill="rgba(255,255,255,0.12)" transform="rotate(15,72,16)"/>
-          </svg>
-          <span class="btn-label">no</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Celebration screen (final state after YES) -->
-  <div class="celebration hidden" id="celebration">
-    <div class="celeb-inner">
-      <h1 class="celeb-title">YESSS! 💘</h1>
-      <p class="celeb-text">I knew you'd say yes.</p>
-      <p class="celeb-sub">Best decision ever. 💕</p>
-    </div>
-  </div>
-
-  <!-- Butterfly (hidden until idle timeout) -->
+  <!-- butterfly -->
   <div id="butterfly" class="butterfly" aria-hidden="true">
     <svg viewBox="0 0 200 180" class="butterfly-svg">
       <defs>
@@ -112,11 +367,12 @@
           <stop offset="60%" stop-color="#CE93D8" stop-opacity="0.45"/>
           <stop offset="100%" stop-color="#AB47BC" stop-opacity="0"/>
         </radialGradient>
-        <filter id="bfG"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="bfGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
       <g class="wing-l">
         <path d="M100,85 C85,55 50,15 20,20 C5,25 0,45 5,65 C10,85 35,100 60,100 C75,100 90,95 100,85Z" fill="url(#bwL)" stroke="#7B1FA2" stroke-width="0.5"/>
         <path d="M100,85 C80,60 50,40 30,35" stroke="rgba(255,255,255,0.15)" stroke-width="0.8" fill="none"/>
+        <path d="M100,85 C75,70 40,55 20,55" stroke="rgba(255,255,255,0.1)" stroke-width="0.6" fill="none"/>
         <circle cx="50" cy="50" r="14" fill="url(#bspot)"/><circle cx="50" cy="50" r="5.5" fill="#311B92" opacity="0.35"/>
         <path d="M100,90 C80,100 50,115 30,130 C20,140 25,150 35,150 C50,150 75,135 100,105Z" fill="url(#bwL)" opacity="0.88" stroke="#7B1FA2" stroke-width="0.5"/>
         <circle cx="55" cy="125" r="7" fill="url(#bspot)"/>
@@ -124,6 +380,7 @@
       <g class="wing-r">
         <path d="M100,85 C115,55 150,15 180,20 C195,25 200,45 195,65 C190,85 165,100 140,100 C125,100 110,95 100,85Z" fill="url(#bwR)" stroke="#7B1FA2" stroke-width="0.5"/>
         <path d="M100,85 C120,60 150,40 170,35" stroke="rgba(255,255,255,0.15)" stroke-width="0.8" fill="none"/>
+        <path d="M100,85 C125,70 160,55 180,55" stroke="rgba(255,255,255,0.1)" stroke-width="0.6" fill="none"/>
         <circle cx="150" cy="50" r="14" fill="url(#bspot)"/><circle cx="150" cy="50" r="5.5" fill="#311B92" opacity="0.35"/>
         <path d="M100,90 C120,100 150,115 170,130 C180,140 175,150 165,150 C150,150 125,135 100,105Z" fill="url(#bwR)" opacity="0.88" stroke="#7B1FA2" stroke-width="0.5"/>
         <circle cx="145" cy="125" r="7" fill="url(#bspot)"/>
@@ -133,20 +390,347 @@
       <circle cx="100" cy="72" r="5" fill="#4A148C"/>
       <path d="M97,68 C90,45 78,35 72,30" stroke="#6A1B9A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
       <path d="M103,68 C110,45 122,35 128,30" stroke="#6A1B9A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <circle cx="72" cy="30" r="3" fill="#EA80FC" filter="url(#bfG)"/>
-      <circle cx="128" cy="30" r="3" fill="#EA80FC" filter="url(#bfG)"/>
+      <circle cx="72" cy="30" r="3" fill="#EA80FC" filter="url(#bfGlow)"/>
+      <circle cx="128" cy="30" r="3" fill="#EA80FC" filter="url(#bfGlow)"/>
     </svg>
   </div>
 
-  <!-- Too-slow overlay -->
+  <!-- too-slow overlay -->
   <div id="tooSlow" class="too-slow-overlay">
     <div class="too-slow-box">
       <p class="too-slow-emoji">🦋</p>
       <h2>Too slow!</h2>
+      <p>The butterfly took your card.</p>
       <button onclick="location.reload()" class="retry-btn">Try again</button>
     </div>
   </div>
 
-  <script type="module" src="/src/main.js"></script>
+<script>
+/* ========= SOUNDS (Web Audio API) ========= */
+let audioCtx = null;
+function actx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+function resumeAudio() { if (audioCtx && audioCtx.state === "suspended") audioCtx.resume(); }
+
+function tone(freq, dur, type, vol) {
+  type = type || "sine"; vol = vol || 0.15;
+  var c = actx(), o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, c.currentTime);
+  g.gain.setValueAtTime(vol, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+  o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + dur);
+}
+function noise(dur, vol) {
+  vol = vol || 0.06; var c = actx(), sr = c.sampleRate, len = sr * dur;
+  var buf = c.createBuffer(1, len, sr), d = buf.getChannelData(0);
+  for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  var src = c.createBufferSource(); src.buffer = buf;
+  var hp = c.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 3000;
+  var g = c.createGain(); g.gain.setValueAtTime(vol, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+  src.connect(hp); hp.connect(g); g.connect(c.destination); src.start(); src.stop(c.currentTime + dur);
+}
+function playOpen() {
+  var c = actx(), o = c.createOscillator(), g = c.createGain();
+  o.type = "sine"; o.frequency.setValueAtTime(250, c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(700, c.currentTime + 0.12);
+  o.frequency.exponentialRampToValueAtTime(180, c.currentTime + 0.35);
+  g.gain.setValueAtTime(0.09, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.4);
+  o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.4);
+  noise(0.18, 0.04);
+  setTimeout(function(){ tone(1100, 0.12, "sine", 0.05); }, 90);
+  setTimeout(function(){ tone(1400, 0.1, "sine", 0.04); }, 170);
+}
+function playPop() {
+  var c = actx(), o = c.createOscillator(), g = c.createGain();
+  o.type = "sine"; o.frequency.setValueAtTime(500, c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(150, c.currentTime + 0.09);
+  g.gain.setValueAtTime(0.13, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.12);
+  o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.12);
+}
+function playChime() {
+  tone(523, 0.28, "sine", 0.12);
+  setTimeout(function(){ tone(659, 0.28, "sine", 0.12); }, 90);
+  setTimeout(function(){ tone(784, 0.35, "sine", 0.12); }, 190);
+  setTimeout(function(){ tone(1047, 0.45, "sine", 0.10); }, 320);
+}
+function playBuzz() {
+  var c = actx(), o = c.createOscillator(), g = c.createGain();
+  o.type = "square"; o.frequency.setValueAtTime(320, c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(70, c.currentTime + 0.28);
+  g.gain.setValueAtTime(0.06, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.32);
+  o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.32);
+}
+function playHover() { tone(900, 0.04, "sine", 0.03); }
+function playShimmer() {
+  tone(880, 0.18, "sine", 0.06);
+  setTimeout(function(){ tone(1100, 0.16, "sine", 0.05); }, 60);
+  setTimeout(function(){ tone(1320, 0.22, "sine", 0.05); }, 130);
+}
+function playDramatic() {
+  var c = actx(), o = c.createOscillator(), g = c.createGain();
+  o.type = "sawtooth"; o.frequency.setValueAtTime(90, c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(500, c.currentTime + 0.9);
+  g.gain.setValueAtTime(0.07, c.currentTime);
+  g.gain.linearRampToValueAtTime(0.10, c.currentTime + 0.5);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 1.3);
+  o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 1.3);
+  setTimeout(function(){ tone(400, 0.55, "triangle", 0.04); }, 250);
+  setTimeout(function(){ tone(520, 0.45, "triangle", 0.035); }, 450);
+}
+
+/* ========= DOM ========= */
+var envelopeBtn   = document.getElementById("envelopeBtn");
+var hint          = document.getElementById("hint");
+var cardShell     = document.getElementById("cardShell");
+var continueBtn   = document.getElementById("continueBtn");
+var modalBackdrop = document.getElementById("modalBackdrop");
+var questionTitle = document.getElementById("questionTitle");
+var questionSub   = document.getElementById("questionSub");
+var choiceRow     = document.getElementById("choiceRow");
+var yesBtn        = document.getElementById("yesBtn");
+var noBtn         = document.getElementById("noBtn");
+var butterfly     = document.getElementById("butterfly");
+var tooSlow       = document.getElementById("tooSlow");
+
+var QUESTION_TITLE = "Will you be my Valentine? 💖";
+
+/* ========= state ========= */
+var opened = false, modalVisible = false, noCount = 0, yesScale = 1;
+var butterflyLaunched = false, idleTimer = null;
+var IDLE_MS = 15000;
+
+function resetIdleTimer() {
+  if (butterflyLaunched) return;
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(function() {
+    if (!butterflyLaunched && !modalVisible) launchButterfly();
+  }, IDLE_MS);
+}
+document.addEventListener("mousemove", resetIdleTimer);
+document.addEventListener("click", resetIdleTimer);
+document.addEventListener("touchstart", resetIdleTimer);
+resetIdleTimer();
+
+/* ========= confetti ========= */
+var CONFETTI_COLORS = ["#B39DDB","#D1C4E9","#7E57C2","#EA80FC","#FF80AB","#FFFFFF"];
+function burstConfetti(intensity) {
+  intensity = intensity || 1;
+  confetti({ particleCount: Math.floor(120*intensity), spread: 70, origin:{y:0.7}, colors: CONFETTI_COLORS });
+  confetti({ particleCount: Math.floor(60*intensity), spread: 120, origin:{y:0.6}, colors: CONFETTI_COLORS });
+}
+
+/* ========= envelope ========= */
+function openEnvelope() {
+  if (opened) return; opened = true;
+  resumeAudio(); playOpen();
+  envelopeBtn.classList.add("open");
+  hint.classList.add("gone");
+  burstConfetti(0.5);
+  setTimeout(function() { continueBtn.classList.add("visible"); continueBtn.tabIndex = 0; }, 1600);
+}
+
+function transitionToModal() {
+  playShimmer();
+  continueBtn.classList.remove("visible"); continueBtn.tabIndex = -1;
+  cardShell.classList.add("fading");
+  setTimeout(showModal, 500);
+}
+
+function showModal() {
+  modalVisible = true; noCount = 0; yesScale = 1;
+  yesBtn.style.transform = "scale(1)"; yesBtn.disabled = false;
+  noBtn.disabled = false; noBtn.style.position = ""; noBtn.style.left = ""; noBtn.style.top = "";
+  questionTitle.textContent = QUESTION_TITLE;
+  questionSub.textContent = "Choose wisely.";
+  modalBackdrop.classList.add("show"); playPop();
+}
+
+function hideModal() { modalBackdrop.classList.remove("show"); modalVisible = false; }
+
+/* ========= NO logic ========= */
+var NO_LINES = [
+  "Are you sure? 😭","Wait… really?","Ok but like… reconsider.",
+  "I will simply pretend I didn't see that.","You meant YES. Try again.",
+  "This button is feeling unsafe. 😈","Final answer??",
+  "The audacity...","💔 ...fine. (jk try again)"
+];
+
+function randomBetween(a,b) { return Math.random()*(b-a)+a; }
+
+function moveNoButtonChaotically() {
+  var rect = choiceRow.getBoundingClientRect();
+  noBtn.style.position = "absolute";
+  var pad = 8, maxX = rect.width - noBtn.offsetWidth - pad, maxY = rect.height - noBtn.offsetHeight - pad;
+  noBtn.style.left = randomBetween(pad, Math.max(pad,maxX)) + "px";
+  noBtn.style.top  = randomBetween(pad, Math.max(pad,maxY)) + "px";
+}
+
+function onNo() {
+  resumeAudio(); playBuzz(); noCount++;
+  yesScale = Math.min(yesScale + 0.18, 2.6);
+  yesBtn.style.transform = "scale(" + yesScale + ")";
+  questionSub.textContent = NO_LINES[Math.min(noCount-1, NO_LINES.length-1)];
+  if (noCount >= 1) moveNoButtonChaotically();
+  burstConfetti(Math.min(0.25 + noCount*0.08, 0.9));
+  modalBackdrop.classList.add("shake");
+  setTimeout(function(){ modalBackdrop.classList.remove("shake"); }, 260);
+  HEARTS.boost();
+}
+
+function onYes() {
+  resumeAudio(); playChime();
+  questionTitle.textContent = "LETS GOOOO 💘";
+  questionSub.textContent = "Correct answer. I knew you had taste.";
+  burstConfetti(1.4);
+  setTimeout(function(){ burstConfetti(1.0); }, 140);
+  setTimeout(function(){ burstConfetti(0.8); }, 280);
+  yesBtn.disabled = true; noBtn.disabled = true;
+  setTimeout(hideModal, 1200);
+  HEARTS.goWild(1800);
+}
+
+/* ========= listeners ========= */
+envelopeBtn.addEventListener("click", function(e) { e.preventDefault(); resumeAudio(); openEnvelope(); });
+continueBtn.addEventListener("click", function(e) { e.stopPropagation(); e.preventDefault(); transitionToModal(); });
+modalBackdrop.addEventListener("click", function(e) { if (e.target === modalBackdrop) hideModal(); });
+yesBtn.addEventListener("click", onYes);
+noBtn.addEventListener("click", onNo);
+yesBtn.addEventListener("mouseenter", function(){ resumeAudio(); playHover(); });
+noBtn.addEventListener("mouseenter", function(){ resumeAudio(); playHover(); });
+
+/* ========= BACKGROUND HEARTS ========= */
+var canvas = document.getElementById("hearts-canvas");
+var ctx = canvas.getContext("2d");
+
+function resize() {
+  var dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+  canvas.width = Math.floor(window.innerWidth * dpr);
+  canvas.height = Math.floor(window.innerHeight * dpr);
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize", resize); resize();
+
+function heartPath(x,y,size) {
+  ctx.beginPath(); var h = size*0.3;
+  ctx.moveTo(x, y+h);
+  ctx.bezierCurveTo(x,y, x-size/2,y, x-size/2,y+h);
+  ctx.bezierCurveTo(x-size/2, y+(size+h)/2, x, y+(size+h)/2, x, y+size);
+  ctx.bezierCurveTo(x, y+(size+h)/2, x+size/2, y+(size+h)/2, x+size/2, y+h);
+  ctx.bezierCurveTo(x+size/2, y, x, y, x, y+h);
+  ctx.closePath();
+}
+
+var HEARTS = (function() {
+  var particles = [], speedMul = 1, wildUntil = 0;
+  function spawn(n) {
+    n = n || 2;
+    for (var i = 0; i < n; i++) {
+      particles.push({
+        x: randomBetween(0, window.innerWidth),
+        y: window.innerHeight + randomBetween(0,120),
+        vy: randomBetween(0.5,1.6), vx: randomBetween(-0.4,0.4),
+        size: randomBetween(8,22), rot: randomBetween(-0.2,0.2),
+        vr: randomBetween(-0.01,0.01), alpha: randomBetween(0.2,0.75),
+        hue: randomBetween(260,340)
+      });
+    }
+  }
+  function boost() {
+    speedMul = Math.min(speedMul+0.08, 2.2);
+    setTimeout(function(){ speedMul = Math.max(1, speedMul-0.12); }, 600);
+  }
+  function goWild(ms) { wildUntil = Date.now() + (ms||1500); }
+  function tick() {
+    var now = Date.now(), wild = now < wildUntil;
+    spawn(wild ? 6 : 2);
+    ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+    for (var i = particles.length-1; i >= 0; i--) {
+      var p = particles[i];
+      p.x += p.vx * (wild?2.2:1);
+      p.y -= p.vy * speedMul * (wild?2.6:1);
+      p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = "hsl("+p.hue+" 80% 65%)";
+      heartPath(0,0,p.size); ctx.fill(); ctx.restore();
+      if (p.y < -60 || p.x < -80 || p.x > window.innerWidth+80) particles.splice(i,1);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+  return { boost: boost, goWild: goWild };
+})();
+
+/* ========= BUTTERFLY SNATCH ========= */
+function launchButterfly() {
+  if (butterflyLaunched) return;
+  butterflyLaunched = true; clearTimeout(idleTimer);
+  resumeAudio(); playDramatic();
+
+  var W = window.innerWidth, H = window.innerHeight;
+  var side = Math.floor(Math.random()*4), sx, sy;
+  switch(side) {
+    case 0: sx=randomBetween(.2*W,.8*W); sy=-120; break;
+    case 1: sx=W+120; sy=randomBetween(.2*H,.8*H); break;
+    case 2: sx=randomBetween(.2*W,.8*W); sy=H+120; break;
+    default: sx=-120; sy=randomBetween(.2*H,.8*H); break;
+  }
+  var cardRect = cardShell.getBoundingClientRect();
+  var tx = cardRect.left + cardRect.width/2, ty = cardRect.top + cardRect.height/2;
+  var ex = side===1 ? -250 : side===3 ? W+250 : randomBetween(0,W);
+  var ey = side===0 ? H+250 : side===2 ? -250 : randomBetween(0,H);
+
+  butterfly.style.left = sx+"px"; butterfly.style.top = sy+"px";
+  butterfly.style.transform = "translate(-50%,-50%)";
+  butterfly.classList.add("visible");
+
+  var dur1 = 2000, t0 = performance.now();
+  function phase1(now) {
+    var t = Math.min((now-t0)/dur1, 1);
+    var ease = t<0.5 ? 2*t*t : -1+(4-2*t)*t;
+    var zigX = Math.sin(t*Math.PI*7)*50*(1-t);
+    var zigY = Math.sin(t*Math.PI*5)*35*(1-t);
+    var cx = sx+(tx-sx)*ease+zigX, cy = sy+(ty-sy)*ease+zigY;
+    var dx = tx-sx+Math.cos(t*Math.PI*7)*50*(1-t);
+    var dy = ty-sy+Math.cos(t*Math.PI*5)*35*(1-t);
+    var angle = Math.atan2(dy,dx)*180/Math.PI;
+    butterfly.style.left = cx+"px"; butterfly.style.top = cy+"px";
+    butterfly.style.transform = "translate(-50%,-50%) rotate("+angle+"deg)";
+    if (t<1) requestAnimationFrame(phase1); else grabAndFly();
+  }
+  function grabAndFly() {
+    var shakes = 0;
+    var sid = setInterval(function() {
+      var rx = (Math.random()-0.5)*24, ry = (Math.random()-0.5)*12;
+      cardShell.style.transition = "none";
+      cardShell.style.transform = "translate("+rx+"px,"+ry+"px) rotate("+(rx/3)+"deg)";
+      shakes++;
+      if (shakes > 12) { clearInterval(sid); flyAway(); }
+    }, 45);
+  }
+  function flyAway() {
+    var dur2 = 1400, t1 = performance.now();
+    function phase2(now) {
+      var t = Math.min((now-t1)/dur2, 1), ease = t*t;
+      var bx = tx+(ex-tx)*ease, by = ty+(ey-ty)*ease;
+      butterfly.style.left = bx+"px"; butterfly.style.top = by+"px";
+      var a2 = Math.atan2(ey-ty, ex-tx)*180/Math.PI;
+      butterfly.style.transform = "translate(-50%,-50%) rotate("+a2+"deg)";
+      var cdx = bx-tx, cdy = by-ty, spin = t*420;
+      cardShell.style.transform = "translate("+cdx+"px,"+cdy+"px) rotate("+spin+"deg) scale("+(1-t*0.6)+")";
+      cardShell.style.opacity = ""+(1-t);
+      if (t<1) requestAnimationFrame(phase2);
+      else { butterfly.classList.remove("visible"); tooSlow.classList.add("show"); }
+    }
+    requestAnimationFrame(phase2);
+  }
+  requestAnimationFrame(phase1);
+}
+</script>
 </body>
 </html>
