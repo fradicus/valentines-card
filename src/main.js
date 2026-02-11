@@ -1,120 +1,55 @@
-import './style.css';
+import confetti from "https://esm.sh/canvas-confetti@1.9.3";
+import {
+  resumeAudio,
+  playOpen,
+  playPop,
+  playChime,
+  playBuzz,
+  playHover,
+  playShimmer,
+  playDramatic,
+} from "./sounds.js";
 
-/* ===== SOUNDS (Web Audio API — no external files) ===== */
-let audioCtx = null;
-function actx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
-function resumeAudio() { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }
+/* ========= editable content ========= */
+const CONTENT = {
+  message:
+    "I made you a chaotic little website because you deserve something fun as hell. 💘",
+  questionTitle: "Will you be my Valentine? 💖",
+};
 
-function tone(freq, dur, type = 'sine', vol = 0.15) {
-  const c = actx(), o = c.createOscillator(), g = c.createGain();
-  o.type = type; o.frequency.setValueAtTime(freq, c.currentTime);
-  g.gain.setValueAtTime(vol, c.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-  o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime + dur);
-}
-function noise(dur, vol = 0.05) {
-  const c = actx(), sr = c.sampleRate, len = sr * dur;
-  const buf = c.createBuffer(1, len, sr), d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-  const src = c.createBufferSource(); src.buffer = buf;
-  const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3000;
-  const g = c.createGain(); g.gain.setValueAtTime(vol, c.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-  src.connect(hp).connect(g).connect(c.destination); src.start(); src.stop(c.currentTime + dur);
-}
+/* ========= DOM refs ========= */
+const envelopeBtn = document.getElementById("envelopeBtn");
+const messageEl = document.getElementById("message");
+const hint = document.getElementById("hint");
+const cardShell = document.getElementById("cardShell");
+const continueBtn = document.getElementById("continueBtn");
 
-function playOpen() {
-  const c = actx(), o = c.createOscillator(), g = c.createGain();
-  o.type = 'sine'; o.frequency.setValueAtTime(250, c.currentTime);
-  o.frequency.exponentialRampToValueAtTime(700, c.currentTime + 0.12);
-  o.frequency.exponentialRampToValueAtTime(180, c.currentTime + 0.35);
-  g.gain.setValueAtTime(0.09, c.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.4);
-  o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime + 0.4);
-  noise(0.18, 0.04);
-  setTimeout(() => tone(1100, 0.12, 'sine', 0.05), 90);
-  setTimeout(() => tone(1400, 0.10, 'sine', 0.04), 170);
-}
-function playPop() {
-  const c = actx(), o = c.createOscillator(), g = c.createGain();
-  o.type = 'sine'; o.frequency.setValueAtTime(500, c.currentTime);
-  o.frequency.exponentialRampToValueAtTime(150, c.currentTime + 0.09);
-  g.gain.setValueAtTime(0.13, c.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.12);
-  o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime + 0.12);
-}
-function playChime() {
-  tone(523, 0.28, 'sine', 0.12);
-  setTimeout(() => tone(659, 0.28, 'sine', 0.12), 90);
-  setTimeout(() => tone(784, 0.35, 'sine', 0.12), 190);
-  setTimeout(() => tone(1047, 0.45, 'sine', 0.10), 320);
-}
-function playBuzz() {
-  const c = actx(), o = c.createOscillator(), g = c.createGain();
-  o.type = 'square'; o.frequency.setValueAtTime(320, c.currentTime);
-  o.frequency.exponentialRampToValueAtTime(70, c.currentTime + 0.28);
-  g.gain.setValueAtTime(0.06, c.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.32);
-  o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime + 0.32);
-}
-function playHover() { tone(900, 0.04, 'sine', 0.03); }
-function playShimmer() {
-  tone(880, 0.18, 'sine', 0.06);
-  setTimeout(() => tone(1100, 0.16, 'sine', 0.05), 60);
-  setTimeout(() => tone(1320, 0.22, 'sine', 0.05), 130);
-}
-function playDramatic() {
-  const c = actx(), o = c.createOscillator(), g = c.createGain();
-  o.type = 'sawtooth'; o.frequency.setValueAtTime(90, c.currentTime);
-  o.frequency.exponentialRampToValueAtTime(500, c.currentTime + 0.9);
-  g.gain.setValueAtTime(0.07, c.currentTime);
-  g.gain.linearRampToValueAtTime(0.10, c.currentTime + 0.5);
-  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 1.3);
-  o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime + 1.3);
-  setTimeout(() => tone(400, 0.55, 'triangle', 0.04), 250);
-  setTimeout(() => tone(520, 0.45, 'triangle', 0.035), 450);
-}
+const modalBackdrop = document.getElementById("modalBackdrop");
+const questionTitle = document.getElementById("questionTitle");
+const questionSub = document.getElementById("questionSub");
+const choiceRow = document.getElementById("choiceRow");
 
-/* ===== DOM REFERENCES ===== */
-const envelopeScene = document.getElementById('envelopeScene');
-const envelope      = document.getElementById('envelope');
-const letter        = document.getElementById('letter');
-const continueBtn   = document.getElementById('continueBtn');
-const backdrop      = document.getElementById('backdrop');
-const qTitle        = document.getElementById('qTitle');
-const qSub          = document.getElementById('qSub');
-const btnRow        = document.getElementById('btnRow');
-const yesBtn        = document.getElementById('yesBtn');
-const noBtn         = document.getElementById('noBtn');
-const celebration   = document.getElementById('celebration');
-const butterflyEl   = document.getElementById('butterfly');
-const tooSlowEl     = document.getElementById('tooSlow');
-const stage         = document.querySelector('.stage');
+const yesBtn = document.getElementById("yesBtn");
+const noBtn = document.getElementById("noBtn");
 
-/* ===== STATE ===== */
-let isOpen = false;
+const butterfly = document.getElementById("butterfly");
+const tooSlow = document.getElementById("tooSlow");
+
+/* ========= inject content ========= */
+messageEl.textContent = CONTENT.message;
+questionTitle.textContent = CONTENT.questionTitle;
+
+/* ========= state ========= */
+let opened = false;
+let modalVisible = false;
 let noCount = 0;
 let yesScale = 1;
-let modalVisible = false;
 let butterflyLaunched = false;
 let idleTimer = null;
 
-const TITLE_DEFAULT = 'Will you be my Valentine? 💖';
-const SUB_DEFAULT   = 'Choose wisely…';
+/* ========= idle timeout (butterfly) ========= */
 const IDLE_MS = 15000;
 
-const NO_LINES = [
-  'Are you sure? 🥺',
-  'Think again…',
-  "That's not even an option.",
-  "I'll pretend I didn't see that.",
-  'Wrong answer. Try again.',
-  'The button is running from you 😈',
-  "You literally can't say no.",
-  'FINAL ANSWER?!',
-];
-
-/* ===== IDLE TIMER (butterfly) ===== */
 function resetIdleTimer() {
   if (butterflyLaunched) return;
   clearTimeout(idleTimer);
@@ -122,381 +57,398 @@ function resetIdleTimer() {
     if (!butterflyLaunched && !modalVisible) launchButterfly();
   }, IDLE_MS);
 }
-document.addEventListener('mousemove', resetIdleTimer);
-document.addEventListener('click', resetIdleTimer);
-document.addEventListener('touchstart', resetIdleTimer);
+
+document.addEventListener("mousemove", resetIdleTimer);
+document.addEventListener("click", resetIdleTimer);
+document.addEventListener("touchstart", resetIdleTimer);
 resetIdleTimer();
 
-/* ===== ENVELOPE OPEN ===== */
+/* ========= confetti helper ========= */
+const CONFETTI_COLORS = [
+  "#B39DDB",
+  "#D1C4E9",
+  "#7E57C2",
+  "#EA80FC",
+  "#FF80AB",
+  "#FFFFFF",
+];
+
+function burstConfetti(intensity = 1) {
+  confetti({
+    particleCount: Math.floor(120 * intensity),
+    spread: 70,
+    origin: { y: 0.7 },
+    colors: CONFETTI_COLORS,
+  });
+  confetti({
+    particleCount: Math.floor(60 * intensity),
+    spread: 120,
+    origin: { y: 0.6 },
+    colors: CONFETTI_COLORS,
+  });
+}
+
+/* ========= envelope open ========= */
 function openEnvelope() {
-  if (isOpen) {
-    // Already open — re-show the continue button if modal isn't up
-    if (!modalVisible) {
-      continueBtn.classList.add('visible');
-    }
-    return;
-  }
-  isOpen = true;
+  if (opened) return;
+  opened = true;
   resumeAudio();
   playOpen();
+  envelopeBtn.classList.add("open");
+  hint.classList.add("gone");
+  burstConfetti(0.5);
 
-  // Open flap (CSS transition)
-  envelope.classList.add('opened');
-
-  // After flap opens, raise the letter
+  // reveal continue button after the letter finishes sliding up
   setTimeout(() => {
-    letter.classList.add('rising');
-  }, 500);
-
-  // After letter rises, reveal the continue button
-  setTimeout(() => {
-    continueBtn.classList.add('visible');
-    playPop();
+    continueBtn.classList.add("visible");
+    continueBtn.tabIndex = 0;
   }, 1600);
 }
 
-envelopeScene.addEventListener('click', openEnvelope);
-
-/* ===== CONTINUE → MODAL TRANSITION ===== */
-continueBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  resumeAudio();
+/* ========= continue -> modal ========= */
+function transitionToModal() {
   playShimmer();
-  continueBtn.classList.remove('visible');
+  continueBtn.classList.remove("visible");
+  continueBtn.tabIndex = -1;
 
-  // Fade out the stage
-  stage.classList.add('fading');
+  // fade card shell out
+  cardShell.classList.add("fading");
 
   setTimeout(() => {
     showModal();
   }, 500);
-});
+}
 
-/* ===== MODAL ===== */
+/* ========= modal helpers ========= */
 function showModal() {
   modalVisible = true;
   noCount = 0;
   yesScale = 1;
-  yesBtn.style.transform = '';
+  yesBtn.style.transform = "scale(1)";
   yesBtn.disabled = false;
   noBtn.disabled = false;
-  noBtn.style.position = '';
-  noBtn.style.left = '';
-  noBtn.style.top = '';
-  qTitle.textContent = TITLE_DEFAULT;
-  qSub.textContent = SUB_DEFAULT;
+  noBtn.style.position = "";
+  noBtn.style.left = "";
+  noBtn.style.top = "";
+  questionTitle.textContent = CONTENT.questionTitle;
+  questionSub.textContent = "Choose wisely.";
 
-  backdrop.classList.remove('hidden');
+  modalBackdrop.classList.add("show");
   playPop();
 }
 
 function hideModal() {
-  backdrop.classList.add('hidden');
+  modalBackdrop.classList.remove("show");
   modalVisible = false;
 }
 
-// Click outside modal to close
-backdrop.addEventListener('click', (e) => {
-  if (e.target === backdrop) hideModal();
-});
+/* ========= NO logic ========= */
+const NO_LINES = [
+  "Are you sure? 😭",
+  "Wait… really?",
+  "Ok but like… reconsider.",
+  "I will simply pretend I didn't see that.",
+  "You meant YES. Try again.",
+  "This button is feeling unsafe. 😈",
+  "Final answer??",
+  "The audacity...",
+  "💔 ...fine. (jk try again)",
+];
 
-/* ===== NO BUTTON ===== */
-function moveNoBtn() {
-  const rowRect = btnRow.getBoundingClientRect();
-  const btnW = noBtn.offsetWidth;
-  const btnH = noBtn.offsetHeight;
-
-  noBtn.style.position = 'absolute';
-
-  const pad = 4;
-  const maxX = rowRect.width - btnW - pad;
-  const maxY = rowRect.height - btnH - pad;
-
-  noBtn.style.left = `${pad + Math.random() * Math.max(0, maxX)}px`;
-  noBtn.style.top  = `${pad + Math.random() * Math.max(0, maxY)}px`;
+function randomBetween(min, max) {
+  return Math.random() * (max - min) + min;
 }
 
-// Desktop: dodge on hover after first NO click
-let hoverDodgeEnabled = false;
-noBtn.addEventListener('mouseenter', () => {
-  if (hoverDodgeEnabled) {
-    resumeAudio();
-    playHover();
-    moveNoBtn();
-  }
-});
+function moveNoButtonChaotically() {
+  const rect = choiceRow.getBoundingClientRect();
+  noBtn.style.position = "absolute";
+  const pad = 8;
+  const maxX = rect.width - noBtn.offsetWidth - pad;
+  const maxY = rect.height - noBtn.offsetHeight - pad;
+  noBtn.style.left = `${randomBetween(pad, Math.max(pad, maxX))}px`;
+  noBtn.style.top = `${randomBetween(pad, Math.max(pad, maxY))}px`;
+}
 
-noBtn.addEventListener('click', () => {
+function onNo() {
   resumeAudio();
   playBuzz();
   noCount++;
-  hoverDodgeEnabled = true;
 
-  // Grow YES button
-  yesScale = Math.min(yesScale + 0.22, 3);
+  yesScale = Math.min(yesScale + 0.18, 2.6);
   yesBtn.style.transform = `scale(${yesScale})`;
 
-  // Change subtitle text
-  qSub.textContent = NO_LINES[Math.min(noCount - 1, NO_LINES.length - 1)];
+  questionSub.textContent =
+    NO_LINES[Math.min(noCount - 1, NO_LINES.length - 1)];
 
-  // Move NO button
-  moveNoBtn();
+  if (noCount >= 1) moveNoButtonChaotically();
 
-  // Shake the modal
-  backdrop.classList.add('shake');
-  setTimeout(() => backdrop.classList.remove('shake'), 450);
+  burstConfetti(Math.min(0.25 + noCount * 0.08, 0.9));
+  modalBackdrop.classList.add("shake");
+  setTimeout(() => modalBackdrop.classList.remove("shake"), 260);
 
-  // Boost background hearts
   HEARTS.boost();
-});
+}
 
-/* ===== YES BUTTON ===== */
-yesBtn.addEventListener('mouseenter', () => { resumeAudio(); playHover(); });
-
-yesBtn.addEventListener('click', () => {
+function onYes() {
   resumeAudio();
   playChime();
+  questionTitle.textContent = "LETS GOOOO 💘";
+  questionSub.textContent = "Correct answer. I knew you had taste.";
+  burstConfetti(1.4);
+  setTimeout(() => burstConfetti(1.0), 140);
+  setTimeout(() => burstConfetti(0.8), 280);
+
   yesBtn.disabled = true;
   noBtn.disabled = true;
 
-  hideModal();
-
-  setTimeout(() => {
-    celebration.classList.remove('hidden');
-    spawnCelebHearts();
-  }, 400);
-
-  HEARTS.goWild(3000);
-});
-
-/* ===== CELEBRATION HEARTS ===== */
-function spawnCelebHearts() {
-  const emojis = ['💖', '💗', '💕', '💘', '❤️', '💝', '✨', '🩷'];
-  const count = 35;
-
-  for (let i = 0; i < count; i++) {
-    setTimeout(() => {
-      const el = document.createElement('span');
-      el.className = 'celeb-heart';
-      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-      el.style.left = `${Math.random() * 100}vw`;
-      el.style.top = `${50 + Math.random() * 50}vh`;
-      el.style.fontSize = `${18 + Math.random() * 28}px`;
-      el.style.setProperty('--dur', `${2.5 + Math.random() * 3}s`);
-      el.style.setProperty('--rot', `${-30 + Math.random() * 60}deg`);
-      el.style.setProperty('--end-scale', `${0.3 + Math.random() * 0.5}`);
-      document.body.appendChild(el);
-      el.addEventListener('animationend', () => el.remove());
-    }, i * 80);
-  }
+  setTimeout(() => hideModal(), 1200);
+  HEARTS.goWild(1800);
 }
 
-/* =========================================================
-   BACKGROUND HEARTS (Canvas — lightweight, capped at 60)
-   ========================================================= */
-const canvas = document.getElementById('bgCanvas');
-const ctx = canvas.getContext('2d');
+/* ========= event listeners ========= */
+envelopeBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  resumeAudio();
+  openEnvelope();
+});
+
+continueBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+  transitionToModal();
+});
+
+modalBackdrop.addEventListener("click", (e) => {
+  if (e.target === modalBackdrop) hideModal();
+});
+
+yesBtn.addEventListener("click", onYes);
+noBtn.addEventListener("click", onNo);
+
+// hover sounds on heart buttons
+[yesBtn, noBtn].forEach((btn) => {
+  btn.addEventListener("mouseenter", () => {
+    resumeAudio();
+    playHover();
+  });
+});
+
+/* ==========================================================
+   BACKGROUND HEARTS (floating canvas)
+   ========================================================== */
+const canvas = document.getElementById("hearts-canvas");
+const ctx = canvas.getContext("2d");
 
 function resize() {
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  canvas.width = window.innerWidth * dpr;
-  canvas.height = window.innerHeight * dpr;
+  const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+  canvas.width = Math.floor(window.innerWidth * dpr);
+  canvas.height = Math.floor(window.innerHeight * dpr);
   canvas.style.width = `${window.innerWidth}px`;
   canvas.style.height = `${window.innerHeight}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-window.addEventListener('resize', resize);
+window.addEventListener("resize", resize);
 resize();
 
-function drawHeart(x, y, size) {
+function heartPath(x, y, size) {
   ctx.beginPath();
-  const t = size * 0.3;
-  ctx.moveTo(x, y + t);
-  ctx.bezierCurveTo(x, y, x - size / 2, y, x - size / 2, y + t);
-  ctx.bezierCurveTo(x - size / 2, y + (size + t) / 2, x, y + (size + t) / 2, x, y + size);
-  ctx.bezierCurveTo(x, y + (size + t) / 2, x + size / 2, y + (size + t) / 2, x + size / 2, y + t);
-  ctx.bezierCurveTo(x + size / 2, y, x, y, x, y + t);
+  const h = size * 0.3;
+  ctx.moveTo(x, y + h);
+  ctx.bezierCurveTo(x, y, x - size / 2, y, x - size / 2, y + h);
+  ctx.bezierCurveTo(x - size / 2, y + (size + h) / 2, x, y + (size + h) / 2, x, y + size);
+  ctx.bezierCurveTo(x, y + (size + h) / 2, x + size / 2, y + (size + h) / 2, x + size / 2, y + h);
+  ctx.bezierCurveTo(x + size / 2, y, x, y, x, y + h);
   ctx.closePath();
 }
 
 const HEARTS = (() => {
-  const ps = [];
+  const particles = [];
   let speedMul = 1;
   let wildUntil = 0;
 
-  function spawn(n = 1) {
+  function spawn(n = 2) {
     for (let i = 0; i < n; i++) {
-      ps.push({
-        x: Math.random() * window.innerWidth,
-        y: window.innerHeight + 20 + Math.random() * 40,
-        vy: 0.25 + Math.random() * 0.7,
-        vx: -0.25 + Math.random() * 0.5,
-        size: 6 + Math.random() * 14,
-        rot: -0.2 + Math.random() * 0.4,
-        vr: -0.006 + Math.random() * 0.012,
-        alpha: 0.08 + Math.random() * 0.3,
-        hue: 270 + Math.random() * 60, // purple/pink range
+      const size = randomBetween(8, 22);
+      particles.push({
+        x: randomBetween(0, window.innerWidth),
+        y: window.innerHeight + randomBetween(0, 120),
+        vy: randomBetween(0.5, 1.6),
+        vx: randomBetween(-0.4, 0.4),
+        size,
+        rot: randomBetween(-0.2, 0.2),
+        vr: randomBetween(-0.01, 0.01),
+        alpha: randomBetween(0.2, 0.75),
+        // use purples / pinks instead of only pinks
+        hue: randomBetween(260, 340),
       });
     }
   }
 
-  // Pre-seed a few hearts on screen so it's not empty on load
-  for (let i = 0; i < 8; i++) {
-    ps.push({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      vy: 0.25 + Math.random() * 0.7,
-      vx: -0.25 + Math.random() * 0.5,
-      size: 6 + Math.random() * 14,
-      rot: -0.2 + Math.random() * 0.4,
-      vr: -0.006 + Math.random() * 0.012,
-      alpha: 0.08 + Math.random() * 0.3,
-      hue: 270 + Math.random() * 60,
-    });
-  }
-
   function boost() {
-    speedMul = Math.min(speedMul + 0.2, 2.5);
-    setTimeout(() => { speedMul = Math.max(1, speedMul - 0.25); }, 700);
+    speedMul = Math.min(speedMul + 0.08, 2.2);
+    setTimeout(() => (speedMul = Math.max(1, speedMul - 0.12)), 600);
   }
 
-  function goWild(ms) {
+  function goWild(ms = 1500) {
     wildUntil = Date.now() + ms;
   }
 
-  let lastSpawn = 0;
-
-  function tick(now) {
-    const wild = Date.now() < wildUntil;
-
-    if (now - lastSpawn > (wild ? 60 : 300)) {
-      spawn(wild ? 3 : 1);
-      lastSpawn = now;
-    }
+  function tick() {
+    const now = Date.now();
+    const isWild = now < wildUntil;
+    spawn(isWild ? 6 : 2);
 
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-    for (let i = ps.length - 1; i >= 0; i--) {
-      const p = ps[i];
-      p.x += p.vx * (wild ? 2.2 : 1);
-      p.y -= p.vy * speedMul * (wild ? 2.5 : 1);
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx * (isWild ? 2.2 : 1);
+      p.y -= p.vy * speedMul * (isWild ? 2.6 : 1);
       p.rot += p.vr;
 
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rot);
       ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = `hsl(${p.hue} 65% 55%)`;
-      drawHeart(0, 0, p.size);
+      ctx.fillStyle = `hsl(${p.hue} 80% 65%)`;
+      heartPath(0, 0, p.size);
       ctx.fill();
       ctx.restore();
 
-      if (p.y < -40) {
-        ps.splice(i, 1);
+      if (p.y < -60 || p.x < -80 || p.x > window.innerWidth + 80) {
+        particles.splice(i, 1);
       }
     }
-
-    if (ps.length > 60) ps.splice(0, ps.length - 60);
-
     requestAnimationFrame(tick);
   }
 
-  requestAnimationFrame(tick);
+  tick();
   return { boost, goWild };
 })();
 
-/* =========================================================
+/* ==========================================================
    BUTTERFLY — idle-timeout snatch animation
-   ========================================================= */
-function randomBetween(a, b) { return Math.random() * (b - a) + a; }
-
+   ========================================================== */
 function launchButterfly() {
   if (butterflyLaunched) return;
   butterflyLaunched = true;
   clearTimeout(idleTimer);
+
   resumeAudio();
   playDramatic();
 
-  const W = window.innerWidth, H = window.innerHeight;
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+
+  // random entry edge  (0=top, 1=right, 2=bottom, 3=left)
   const side = Math.floor(Math.random() * 4);
   let sx, sy;
   switch (side) {
-    case 0: sx = randomBetween(0.2*W, 0.8*W); sy = -120; break;
-    case 1: sx = W + 120; sy = randomBetween(0.2*H, 0.8*H); break;
-    case 2: sx = randomBetween(0.2*W, 0.8*W); sy = H + 120; break;
-    default: sx = -120; sy = randomBetween(0.2*H, 0.8*H); break;
+    case 0: sx = randomBetween(0.2 * W, 0.8 * W); sy = -120; break;
+    case 1: sx = W + 120; sy = randomBetween(0.2 * H, 0.8 * H); break;
+    case 2: sx = randomBetween(0.2 * W, 0.8 * W); sy = H + 120; break;
+    default: sx = -120; sy = randomBetween(0.2 * H, 0.8 * H); break;
   }
 
-  const sceneRect = envelopeScene.getBoundingClientRect();
-  const tx = sceneRect.left + sceneRect.width / 2;
-  const ty = sceneRect.top + sceneRect.height / 2;
+  // target = center of card
+  const cardRect = cardShell.getBoundingClientRect();
+  const tx = cardRect.left + cardRect.width / 2;
+  const ty = cardRect.top + cardRect.height / 2;
 
+  // exit = random opposite-ish edge
   const ex = side === 1 ? -250 : side === 3 ? W + 250 : randomBetween(0, W);
   const ey = side === 0 ? H + 250 : side === 2 ? -250 : randomBetween(0, H);
 
-  butterflyEl.style.left = sx + 'px';
-  butterflyEl.style.top = sy + 'px';
-  butterflyEl.style.transform = 'translate(-50%,-50%)';
-  butterflyEl.classList.add('visible');
+  // show butterfly at start
+  butterfly.style.left = `${sx}px`;
+  butterfly.style.top = `${sy}px`;
+  butterfly.style.transform = "translate(-50%,-50%)";
+  butterfly.classList.add("visible");
 
-  const dur1 = 2000, t0 = performance.now();
+  /* --- Phase 1: fly to card (2s) --- */
+  const dur1 = 2000;
+  const t0 = performance.now();
 
   function phase1(now) {
     const t = Math.min((now - t0) / dur1, 1);
-    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+    const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
     const zigX = Math.sin(t * Math.PI * 7) * 50 * (1 - t);
     const zigY = Math.sin(t * Math.PI * 5) * 35 * (1 - t);
+
     const cx = sx + (tx - sx) * ease + zigX;
     const cy = sy + (ty - sy) * ease + zigY;
-    // Point butterfly in direction of travel (head-first, not upside down)
-    const prevX = sx + (tx - sx) * (t < 0.5 ? 2*(t-0.01)*(t-0.01) : -1+(4-2*(t-0.01))*(t-0.01));
-    const velX = cx - (sx + (tx - sx) * (t < 0.02 ? 0 : (t-0.02 < 0.5 ? 2*(t-0.02)*(t-0.02) : -1+(4-2*(t-0.02))*(t-0.02))) + Math.sin((t-0.02) * Math.PI * 7) * 50 * (1 - (t-0.02)));
-    const velY = cy - (sy + (ty - sy) * (t < 0.02 ? 0 : (t-0.02 < 0.5 ? 2*(t-0.02)*(t-0.02) : -1+(4-2*(t-0.02))*(t-0.02))) + Math.sin((t-0.02) * Math.PI * 5) * 35 * (1 - (t-0.02)));
-    // Clamp rotation so butterfly stays mostly upright (no flipping)
-    let angle = Math.atan2(velY, velX) * 180 / Math.PI;
-    // Keep between -90 and 90 so it doesn't go upside down
-    if (angle > 90) angle = 90;
-    if (angle < -90) angle = -90;
-    butterflyEl.style.left = cx + 'px';
-    butterflyEl.style.top = cy + 'px';
-    butterflyEl.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
-    if (t < 1) requestAnimationFrame(phase1); else grabAndFly();
+
+    // point butterfly in travel direction
+    const dx = tx - sx + Math.cos(t * Math.PI * 7) * 50 * (1 - t);
+    const dy = ty - sy + Math.cos(t * Math.PI * 5) * 35 * (1 - t);
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+    butterfly.style.left = `${cx}px`;
+    butterfly.style.top = `${cy}px`;
+    butterfly.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
+
+    if (t < 1) {
+      requestAnimationFrame(phase1);
+    } else {
+      grabAndFly();
+    }
   }
 
+  /* --- Phase 2: shake card, then fly away with it --- */
   function grabAndFly() {
     let shakes = 0;
-    const sid = setInterval(() => {
+    const shakeId = setInterval(() => {
       const rx = (Math.random() - 0.5) * 24;
       const ry = (Math.random() - 0.5) * 12;
-      envelopeScene.style.transition = 'none';
-      envelopeScene.style.transform = `translate(${rx}px,${ry}px) rotate(${rx/3}deg)`;
+      cardShell.style.transition = "none";
+      cardShell.style.transform = `translate(${rx}px,${ry}px) rotate(${rx / 3}deg)`;
       shakes++;
-      if (shakes > 12) { clearInterval(sid); flyAway(); }
+      if (shakes > 12) {
+        clearInterval(shakeId);
+        flyAway();
+      }
     }, 45);
   }
 
   function flyAway() {
-    const dur2 = 1400, t1 = performance.now();
+    const dur2 = 1400;
+    const t1 = performance.now();
+    const startCX = tx;
+    const startCY = ty;
+
     function phase2(now) {
       const t = Math.min((now - t1) / dur2, 1);
-      const ease = t * t;
+      const ease = t * t; // accelerate out
+
       const bx = tx + (ex - tx) * ease;
       const by = ty + (ey - ty) * ease;
-      butterflyEl.style.left = bx + 'px';
-      butterflyEl.style.top = by + 'px';
-      let a2 = Math.atan2(ey - ty, ex - tx) * 180 / Math.PI;
-      if (a2 > 90) a2 = 90;
-      if (a2 < -90) a2 = -90;
-      butterflyEl.style.transform = `translate(-50%,-50%) rotate(${a2}deg)`;
-      const cdx = bx - tx, cdy = by - ty;
+
+      butterfly.style.left = `${bx}px`;
+      butterfly.style.top = `${by}px`;
+      const a2 = Math.atan2(ey - ty, ex - tx) * (180 / Math.PI);
+      butterfly.style.transform = `translate(-50%,-50%) rotate(${a2}deg)`;
+
+      // card follows butterfly
+      const cdx = bx - startCX;
+      const cdy = by - startCY;
       const spin = t * 420;
-      envelopeScene.style.transform = `translate(${cdx}px,${cdy}px) rotate(${spin}deg) scale(${1 - t*0.6})`;
-      envelopeScene.style.opacity = `${1 - t}`;
-      if (t < 1) requestAnimationFrame(phase2);
-      else { butterflyEl.classList.remove('visible'); tooSlowEl.classList.add('show'); }
+      cardShell.style.transform = `translate(${cdx}px,${cdy}px) rotate(${spin}deg) scale(${1 - t * 0.6})`;
+      cardShell.style.opacity = `${1 - t}`;
+
+      if (t < 1) {
+        requestAnimationFrame(phase2);
+      } else {
+        butterfly.classList.remove("visible");
+        showTooSlow();
+      }
     }
     requestAnimationFrame(phase2);
   }
 
   requestAnimationFrame(phase1);
+}
+
+function showTooSlow() {
+  tooSlow.classList.add("show");
 }
