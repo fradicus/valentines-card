@@ -103,17 +103,23 @@ const TITLE_DEFAULT = 'Will you be my Valentine? 💖';
 const SUB_DEFAULT   = 'Choose wisely…';
 const IDLE_MS = 15000;
 
-const NO_LINES = [];
+const NO_LINES = [
+  'Are you sure? 🥺',
+  'Think again…',
+  "That's not even an option.",
+  "I'll pretend I didn't see that.",
+  'Wrong answer. Try again.',
+  'The button is running from you 😈',
+  "You literally can't say no.",
+  'FINAL ANSWER?!',
+];
 
 /* ===== IDLE TIMER (butterfly) ===== */
 function resetIdleTimer() {
   if (butterflyLaunched) return;
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
-    // Only launch butterfly if still on the envelope/letter stage
-    if (!butterflyLaunched && !modalVisible && celebration.classList.contains('hidden')) {
-      launchButterfly();
-    }
+    if (!butterflyLaunched && !modalVisible) launchButterfly();
   }, IDLE_MS);
 }
 document.addEventListener('mousemove', resetIdleTimer);
@@ -230,7 +236,8 @@ noBtn.addEventListener('click', () => {
   yesScale = Math.min(yesScale + 0.22, 3);
   yesBtn.style.transform = `scale(${yesScale})`;
 
-  // Keep "Choose wisely…" — no text changes
+  // Change subtitle text
+  qSub.textContent = NO_LINES[Math.min(noCount - 1, NO_LINES.length - 1)];
 
   // Move NO button
   moveNoBtn();
@@ -251,10 +258,6 @@ yesBtn.addEventListener('click', () => {
   playChime();
   yesBtn.disabled = true;
   noBtn.disabled = true;
-
-  // Stop the butterfly from ever appearing after YES
-  butterflyLaunched = true;
-  clearTimeout(idleTimer);
 
   hideModal();
 
