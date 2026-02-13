@@ -22,11 +22,10 @@
         <!-- Layer 2: front pocket (bottom V-notch) -->
         <div class="env-front"></div>
 
-        <!-- Layer 3: label text on envelope -->
-        <div class="env-label">Hey Linda</div>
-
-        <!-- Layer 4: flap (downward triangle, inner side facing user) -->
-        <div class="env-flap"></div>
+        <!-- Layer 4: flap (downward triangle, with label inside) -->
+        <div class="env-flap">
+          <div class="env-label">Hey Linda</div>
+        </div>
 
         <!-- Layer 1→10: letter (hidden, rises on open) -->
         <div class="letter" id="letter">
@@ -54,12 +53,12 @@
           <svg class="heart-svg" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="yG" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ff6b9d"/><stop offset="50%" stop-color="#ff005d"/><stop offset="100%" stop-color="#c50048"/>
+                <stop offset="0%" stop-color="#b39ddb"/><stop offset="50%" stop-color="#7e57c2"/><stop offset="100%" stop-color="#512da8"/>
               </linearGradient>
               <linearGradient id="yHL" x1="30%" y1="0%" x2="50%" y2="50%">
                 <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/>
               </linearGradient>
-              <filter id="yGlow"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="rgba(255,0,93,0.5)"/></filter>
+              <filter id="yGlow"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="rgba(126,87,194,0.5)"/></filter>
             </defs>
             <path d="M50,85 C25,65 0,50 0,28 C0,10 12,0 26,0 C36,0 46,8 50,18 C54,8 64,0 74,0 C88,0 100,10 100,28 C100,50 75,65 50,85Z" fill="url(#yG)" filter="url(#yGlow)"/>
             <path d="M50,78 C28,60 5,47 5,28 C5,13 15,5 27,5 C36,5 45,11 50,20" fill="url(#yHL)" opacity="0.5"/>
@@ -72,9 +71,9 @@
           <svg class="heart-svg" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="nG" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#b39ddb"/><stop offset="50%" stop-color="#7e57c2"/><stop offset="100%" stop-color="#512da8"/>
+                <stop offset="0%" stop-color="#aaa"/><stop offset="50%" stop-color="#777"/><stop offset="100%" stop-color="#4a4a4a"/>
               </linearGradient>
-              <filter id="nGlow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(126,87,194,0.4)"/></filter>
+              <filter id="nGlow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(100,100,100,0.35)"/></filter>
             </defs>
             <path d="M50,85 C25,65 0,50 0,28 C0,10 12,0 26,0 C36,0 46,8 50,18 C54,8 64,0 74,0 C88,0 100,10 100,28 C100,50 75,65 50,85Z" fill="url(#nG)" filter="url(#nGlow)"/>
             <ellipse cx="28" cy="16" rx="10" ry="6" fill="rgba(255,255,255,0.15)" transform="rotate(-15,28,16)"/>
@@ -89,9 +88,7 @@
   <!-- Celebration screen (final state after YES) -->
   <div class="celebration hidden" id="celebration">
     <div class="celeb-inner">
-      <h1 class="celeb-title">YESSS! 💘</h1>
-      <p class="celeb-text">I knew you'd say yes.</p>
-      <p class="celeb-sub">Best decision ever. 💕</p>
+      <h1 class="celeb-title">I knew you'd say yes.</h1>
     </div>
   </div>
 
