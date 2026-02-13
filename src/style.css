@@ -146,22 +146,17 @@ body {
 
 .env-label {
   position: absolute;
-  bottom: 16%;
+  top: 16%;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 3;
+  z-index: 1;
   font-family: 'Caveat', cursive;
-  font-size: clamp(22px, 5vw, 34px);
+  font-size: clamp(20px, 4.5vw, 30px);
   font-weight: 700;
   color: rgba(255, 255, 255, 0.92);
   white-space: nowrap;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   pointer-events: none;
-  transition: opacity 0.4s ease 0.3s;
-}
-
-.envelope.opened .env-label {
-  opacity: 0;
 }
 
 /* --- Envelope Flap (downward triangle, inner side faces user) --- */
@@ -399,7 +394,7 @@ body {
 
 @keyframes yes-pulse {
   0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.1) drop-shadow(0 0 10px rgba(255,0,93,0.3)); }
+  50% { filter: brightness(1.1) drop-shadow(0 0 10px rgba(126,87,194,0.3)); }
 }
 
 .yes-btn .btn-label {
@@ -567,7 +562,7 @@ body {
 .too-slow-emoji { font-size: 64px; margin: 0 0 12px; animation: bob 1.5s ease-in-out infinite; }
 @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .too-slow-box h2 { font-size: 32px; margin: 0 0 8px; }
-.too-slow-box p  { font-size: 16px; opacity: 0.7; margin: 0 0 28px; }
+.too-slow-box p { font-size: 16px; opacity: 0.7; margin: 0 0 28px; }
 
 .retry-btn {
   all: unset;
